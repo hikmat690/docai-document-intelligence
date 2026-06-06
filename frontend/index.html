@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DocAI — Document Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/14.1.3/marked.min.js"></script>
+<style>
+:root {
+  --ink: #0c0d0f;
+  --ink2: #1a1c20;
+  --ink3: #252830;
+  --fog: #2e3138;
+  --mist: #3d424d;
+  --dim: #6b7280;
+  --soft: #9ca3af;
+  --pale: #d1d5db;
+  --white: #f9fafb;
+  --gold: #c9a84c;
+  --gold2: #e8c96a;
+  --gold-dim: rgba(201,168,76,0.12);
+  --gold-glow: rgba(201,168,76,0.08);
+  --teal: #2dd4bf;
+  --teal-dim: rgba(45,212,191,0.1);
+  --rose: #fb7185;
+  --rose-dim: rgba(251,113,133,0.1);
+  --sky: #38bdf8;
+  --sky-dim: rgba(56,189,248,0.1);
+  --serif: 'Instrument Serif', Georgia, serif;
+  --mono: 'Geist Mono', 'Courier New', monospace;
+  --sans: 'Geist', system-ui, sans-serif;
+  --r: 10px;
+  --r-lg: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--ink);
+  color: var(--white);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--fog); border-radius: 3px; }
+
+/* ── Header ── */
+header {
+  height: 56px;
+  background: var(--ink2);
+  border-bottom: 1px solid var(--fog);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20;
+}
+
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--white);
+  letter-spacing: -0.02em;
+  font-style: italic;
+}
+.logo-dot { color: var(--gold); font-style: normal; }
+
+.header-sep { flex: 1; }
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  background: var(--ink3);
+  border: 1px solid var(--fog);
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+.status-dot.live { background: var(--teal); box-shadow: 0 0 6px var(--teal); animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+.btn-sm {
+  background: transparent;
+  border: 1px solid var(--fog);
+  border-radius: var(--r);
+  color: var(--soft);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-sm:hover { border-color: var(--mist); color: var(--white); }
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Left Panel ── */
+.left-panel {
+  width: 300px;
+  border-right: 1px solid var(--fog);
+  display: flex;
+  flex-direction: column;
+  background: var(--ink2);
+  flex-shrink: 0;
+}
+
+.panel-section {
+  padding: 16px;
+  border-bottom: 1px solid var(--fog);
+}
+
+.panel-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* API Config */
+.field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.field-label { font-size: 11px; color: var(--soft); font-family: var(--mono); }
+.field-input {
+  background: var(--ink3);
+  border: 1px solid var(--fog);
+  border-radius: var(--r);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 8px 10px;
+  outline: none;
+  width: 100%;
+  transition: border-color .2s;
+}
+.field-input:focus { border-color: var(--gold); }
+.field-input::placeholder { color: var(--dim); }
+select.field-input { cursor: pointer; }
+
+.btn-connect {
+  width: 100%;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--r);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 9px;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: all .2s;
+  letter-spacing: .04em;
+}
+.btn-connect:hover { background: var(--gold2); }
+.btn-connect:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Upload Zone */
+.upload-zone {
+  border: 1.5px dashed var(--fog);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: var(--gold-glow); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-icon { font-size: 28px; margin-bottom: 8px; color: var(--dim); }
+.upload-title { font-size: 13px; color: var(--pale); font-weight: 500; margin-bottom: 3px; }
+.upload-sub { font-size: 11px; color: var(--dim); }
+.upload-types { font-family: var(--mono); font-size: 10px; color: var(--gold); margin-top: 6px; letter-spacing: .05em; }
+
+/* Document List */
+.doc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.doc-empty {
+  text-align: center;
+  padding: 30px 16px;
+  color: var(--dim);
+  font-size: 13px;
+}
+
+.doc-card {
+  background: var(--ink3);
+  border: 1px solid var(--fog);
+  border-radius: var(--r);
+  padding: 11px 13px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.doc-card:hover { border-color: var(--mist); }
+.doc-card.selected { border-color: var(--gold); background: var(--gold-glow); }
+.doc-card-top { display: flex; align-items: flex-start; gap: 8px; }
+.doc-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.doc-name { font-size: 12px; color: var(--white); font-weight: 500; line-height: 1.4; word-break: break-all; }
+.doc-meta { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 4px; }
+.doc-summary { font-size: 11px; color: var(--soft); margin-top: 6px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.doc-del {
+  position: absolute; top: 8px; right: 8px;
+  background: none; border: none; color: var(--dim);
+  cursor: pointer; font-size: 14px; padding: 2px 5px;
+  border-radius: 4px; transition: all .15s;
+  opacity: 0;
+}
+.doc-card:hover .doc-del { opacity: 1; }
+.doc-del:hover { color: var(--rose); background: var(--rose-dim); }
+.doc-sel-check { position: absolute; top: 8px; right: 30px; }
+.check-box {
+  width: 16px; height: 16px; border-radius: 4px;
+  border: 1px solid var(--fog);
+  background: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--gold);
+  transition: all .15s;
+}
+.doc-card.selected .check-box { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+
+/* ── Right Panel ── */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--fog);
+  background: var(--ink2);
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 14px 18px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--pale); }
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* Content Area */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+}
+
+/* Welcome */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  gap: 16px;
+}
+.welcome-title {
+  font-family: var(--serif);
+  font-size: 42px;
+  font-style: italic;
+  color: var(--white);
+  letter-spacing: -.02em;
+  line-height: 1.2;
+}
+.welcome-title span { color: var(--gold); }
+.welcome-sub { color: var(--dim); font-size: 15px; max-width: 420px; line-height: 1.7; }
+.welcome-notice {
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,.3);
+  border-radius: var(--r);
+  padding: 10px 18px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gold);
+}
+
+/* Q&A Tab */
+.qa-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0;
+}
+
+.qa-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.qa-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--dim);
+}
+.qa-empty-icon { font-size: 40px; margin-bottom: 12px; opacity: .5; }
+.qa-empty-text { font-size: 14px; }
+
+.msg-user {
+  align-self: flex-end;
+  max-width: 70%;
+  background: var(--gold);
+  color: var(--ink);
+  border-radius: 16px 16px 4px 16px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.msg-ai {
+  align-self: flex-start;
+  max-width: 85%;
+}
+
+.msg-ai-bubble {
+  background: var(--ink3);
+  border: 1px solid var(--fog);
+  border-radius: 4px 16px 16px 16px;
+  padding: 16px 18px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.msg-ai-bubble h1, .msg-ai-bubble h2, .msg-ai-bubble h3 { font-family: var(--serif); font-style: italic; margin: 12px 0 6px; color: var(--gold2); }
+.msg-ai-bubble p { margin-bottom: 8px; }
+.msg-ai-bubble p:last-child { margin-bottom: 0; }
+.msg-ai-bubble ul, .msg-ai-bubble ol { padding-left: 18px; margin-bottom: 8px; }
+.msg-ai-bubble li { margin-bottom: 4px; }
+.msg-ai-bubble code { font-family: var(--mono); font-size: 12px; background: var(--fog); padding: 1px 5px; border-radius: 4px; color: var(--teal); }
+.msg-ai-bubble pre { background: var(--ink); border: 1px solid var(--fog); border-radius: var(--r); padding: 12px; overflow-x: auto; margin: 10px 0; }
+.msg-ai-bubble pre code { background: none; padding: 0; color: inherit; }
+.msg-ai-bubble strong { color: var(--gold2); }
+.msg-ai-bubble blockquote { border-left: 3px solid var(--gold); padding-left: 12px; color: var(--soft); margin: 8px 0; }
+
+.confidence-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--mono); font-size: 10px;
+  padding: 3px 8px; border-radius: 4px; margin-bottom: 8px;
+  letter-spacing: .05em;
+}
+.confidence-high { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(45,212,191,.2); }
+.confidence-medium { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(201,168,76,.2); }
+.confidence-low { background: var(--rose-dim); color: var(--rose); border: 1px solid rgba(251,113,133,.2); }
+
+.sources-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--fog); }
+.source-pill {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--sky-dim); color: var(--sky);
+  border: 1px solid rgba(56,189,248,.2);
+  padding: 3px 8px; border-radius: 4px;
+}
+
+.qa-input-area {
+  flex-shrink: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--fog);
+}
+
+.qa-input-row {
+  display: flex;
+  gap: 10px;
+  background: var(--ink3);
+  border: 1px solid var(--fog);
+  border-radius: 14px;
+  padding: 10px 12px 10px 18px;
+  transition: border-color .2s;
+}
+.qa-input-row:focus-within { border-color: var(--gold); }
+
+.qa-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--white); font-family: var(--sans); font-size: 14px;
+  resize: none; max-height: 120px; line-height: 1.5;
+}
+.qa-input::placeholder { color: var(--dim); }
+
+.qa-send {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--gold);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink); font-size: 16px;
+  transition: all .2s; flex-shrink: 0;
+}
+.qa-send:hover:not(:disabled) { background: var(--gold2); transform: scale(1.05); }
+.qa-send:disabled { opacity: .4; cursor: not-allowed; }
+
+.qa-hint { font-size: 11px; color: var(--dim); font-family: var(--mono); text-align: center; margin-top: 8px; }
+
+/* Extraction Tab */
+.extract-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.extract-type-btn {
+  background: var(--ink3);
+  border: 1px solid var(--fog);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: left;
+}
+.extract-type-btn:hover { border-color: var(--mist); }
+.extract-type-btn.active { border-color: var(--gold); background: var(--gold-glow); }
+.extract-icon { font-size: 22px; margin-bottom: 6px; }
+.extract-name { font-size: 13px; color: var(--white); font-weight: 500; }
+.extract-desc { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+.doc-selector {
+  background: var(--ink3);
+  border: 1px solid var(--fog);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.doc-select-label { font-size: 11px; color: var(--soft); font-family: var(--mono); margin-bottom: 6px; }
+select.doc-select {
+  width: 100%; background: var(--ink); border: 1px solid var(--fog);
+  border-radius: 6px; color: var(--white); font-family: var(--mono);
+  font-size: 12px; padding: 7px 10px; outline: none; cursor: pointer;
+}
+
+.btn-run {
+  background: var(--gold);
+  border: none; border-radius: var(--r);
+  color: var(--ink); font-family: var(--mono);
+  font-size: 12px; font-weight: 500;
+  padding: 10px 24px; cursor: pointer;
+  transition: all .2s;
+}
+.btn-run:hover { background: var(--gold2); }
+.btn-run:disabled { opacity: .5; cursor: not-allowed; }
+
+.result-card {
+  background: var(--ink3);
+  border: 1px solid var(--fog);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-top: 16px;
+}
+.result-card-header {
+  background: var(--ink2);
+  border-bottom: 1px solid var(--fog);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.result-card-title { font-family: var(--mono); font-size: 12px; color: var(--gold); letter-spacing: .06em; }
+.result-card-body { padding: 16px; }
+
+.json-viewer { font-family: var(--mono); font-size: 12px; color: var(--pale); line-height: 1.7; }
+.json-key { color: var(--sky); }
+.json-str { color: var(--teal); }
+.json-num { color: var(--gold2); }
+.json-null { color: var(--dim); }
+.json-bool { color: var(--rose); }
+
+/* Compare Tab */
+.compare-pickers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.compare-vs {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-style: italic;
+  font-size: 16px; color: var(--dim);
+}
+
+.compare-result { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.compare-col { background: var(--ink3); border: 1px solid var(--fog); border-radius: var(--r); padding: 14px; }
+.compare-col-title { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; margin-bottom: 10px; }
+.compare-col.sim .compare-col-title { color: var(--teal); }
+.compare-col.diff .compare-col-title { color: var(--rose); }
+.compare-item { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; color: var(--pale); line-height: 1.5; }
+.compare-bullet { flex-shrink: 0; margin-top: 2px; }
+
+.summary-box {
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,.25);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--gold2);
+  line-height: 1.7;
+  margin-top: 16px;
+  font-family: var(--serif);
+  font-style: italic;
+}
+
+/* Spinner */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--fog);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-row { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; color: var(--dim); padding: 20px 0; }
+
+/* File type icons */
+.ft-pdf { color: #f87171; }
+.ft-docx { color: #60a5fa; }
+.ft-txt { color: #a3e635; }
+.ft-md { color: var(--gold); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--ink2); border: 1px solid var(--fog);
+  border-radius: var(--r); padding: 12px 18px;
+  font-size: 13px; z-index: 1000;
+  transform: translateY(60px); opacity: 0;
+  transition: all .3s; max-width: 300px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { border-color: rgba(45,212,191,.4); color: var(--teal); }
+.toast.err { border-color: rgba(251,113,133,.4); color: var(--rose); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DocAI<span class="logo-dot">.</span></div>
+  <div style="font-family:var(--mono); font-size:11px; color:var(--dim);">Document Intelligence Platform</div>
+  <div class="header-sep"></div>
+  <div class="status-badge">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">not connected</span>
+  </div>
+  <button class="btn-sm" onclick="clearAll()">clear all</button>
+</header>
+
+<div class="layout">
+
+  <!-- ── Left Panel ── -->
+  <aside class="left-panel">
+
+    <!-- Config -->
+    <div class="panel-section">
+      <div class="panel-label">configuration</div>
+      <div class="field-group">
+        <div class="field-label">GROQ API KEY</div>
+        <input class="field-input" type="password" id="groq-key" placeholder="gsk_..."/>
+      </div>
+      <div class="field-group">
+        <div class="field-label">MODEL</div>
+        <select class="field-input" id="model-sel">
+          <option value="llama-3.3-70b-versatile">Llama 3.3 70B · Best</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B · Fast</option>
+          <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+        </select>
+      </div>
+      <button class="btn-connect" id="connect-btn" onclick="connectEngine()">▶ Initialize Engine</button>
+    </div>
+
+    <!-- Upload -->
+    <div class="panel-section">
+      <div class="panel-label">upload document</div>
+      <div class="upload-zone" id="upload-zone"
+        ondragover="event.preventDefault(); this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event)">
+        <input type="file" id="file-input" accept=".pdf,.docx,.doc,.txt,.md" onchange="handleFile(event)"/>
+        <div class="upload-icon">⬆</div>
+        <div class="upload-title">Drop file or click to upload</div>
+        <div class="upload-sub">Max 20MB per file</div>
+        <div class="upload-types">PDF · DOCX · TXT · MD</div>
+      </div>
+      <div id="upload-status" style="display:none; padding:8px 0;">
+        <div class="loading-row"><div class="spinner"></div> Processing document...</div>
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="panel-label" style="padding: 12px 16px 4px; font-size:10px; letter-spacing:.12em; color:var(--dim); text-transform:uppercase; font-family:var(--mono);">documents <span id="doc-count" style="color:var(--gold)">0</span></div>
+    <div class="doc-list" id="doc-list">
+      <div class="doc-empty">No documents yet.<br/>Upload to get started.</div>
+    </div>
+
+  </aside>
+
+  <!-- ── Right Panel ── -->
+  <div class="right-panel">
+
+    <div class="tabs">
+      <div class="tab active" id="tab-qa" onclick="switchTab('qa')">Q &amp; A</div>
+      <div class="tab" id="tab-extract" onclick="switchTab('extract')">Extract Data</div>
+      <div class="tab" id="tab-compare" onclick="switchTab('compare')">Compare Docs</div>
+    </div>
+
+    <!-- Q&A -->
+    <div class="content" id="view-qa">
+      <div class="qa-layout" style="height:100%;">
+        <div class="qa-messages" id="qa-messages">
+          <div class="welcome" id="welcome-qa">
+            <div class="welcome-title">Ask your<br/><span>documents</span></div>
+            <p class="welcome-sub">Upload documents and ask questions in natural language. DocAI will find the answer with source citations.</p>
+            <div class="welcome-notice">⚡ Enter your Groq API key to begin</div>
+          </div>
+        </div>
+        <div class="qa-input-area">
+          <div class="qa-input-row">
+            <textarea class="qa-input" id="qa-input" rows="1"
+              placeholder="Ask anything about your documents..."
+              onkeydown="qaKey(event)"
+              oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+            <button class="qa-send" id="qa-send" onclick="sendQA()" disabled>➤</button>
+          </div>
+          <div class="qa-hint">Enter to send · Shift+Enter for new line · Select documents to filter</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extract -->
+    <div class="content" id="view-extract" style="display:none;">
+      <div style="max-width:700px;">
+        <div style="font-family:var(--serif); font-style:italic; font-size:28px; color:var(--white); margin-bottom:6px;">Extract Structured Data</div>
+        <div style="color:var(--dim); font-size:14px; margin-bottom:24px;">Pull structured fields from invoices, contracts, resumes, or any document.</div>
+
+        <div class="panel-label" style="margin-bottom:10px;">choose extraction type</div>
+        <div class="extract-grid">
+          <div class="extract-type-btn active" data-type="invoice" onclick="selectExtractType(this)">
+            <div class="extract-icon">🧾</div>
+            <div class="extract-name">Invoice</div>
+            <div class="extract-desc">Amount, vendor, dates, line items</div>
+          </div>
+          <div class="extract-type-btn" data-type="contract" onclick="selectExtractType(this)">
+            <div class="extract-icon">📋</div>
+            <div class="extract-name">Contract</div>
+            <div class="extract-desc">Parties, terms, obligations, dates</div>
+          </div>
+          <div class="extract-type-btn" data-type="resume" onclick="selectExtractType(this)">
+            <div class="extract-icon">👤</div>
+            <div class="extract-name">Resume / CV</div>
+            <div class="extract-desc">Skills, experience, education</div>
+          </div>
+          <div class="extract-type-btn" data-type="general" onclick="selectExtractType(this)">
+            <div class="extract-icon">📄</div>
+            <div class="extract-name">General</div>
+            <div class="extract-desc">Smart extraction for any document</div>
+          </div>
+        </div>
+
+        <div class="doc-selector">
+          <div class="doc-select-label">SELECT DOCUMENT</div>
+          <select class="doc-select" id="extract-doc-select">
+            <option value="">— Choose a document —</option>
+          </select>
+        </div>
+
+        <button class="btn-run" id="extract-btn" onclick="runExtraction()" disabled>Extract Data →</button>
+
+        <div id="extract-result"></div>
+      </div>
+    </div>
+
+    <!-- Compare -->
+    <div class="content" id="view-compare" style="display:none;">
+      <div style="max-width:800px;">
+        <div style="font-family:var(--serif); font-style:italic; font-size:28px; color:var(--white); margin-bottom:6px;">Compare Documents</div>
+        <div style="color:var(--dim); font-size:14px; margin-bottom:24px;">Select two documents to compare their content, terms, and key differences.</div>
+
+        <div style="display:grid; grid-template-columns: 1fr auto 1fr; gap:12px; align-items:end; margin-bottom:16px;">
+          <div>
+            <div class="doc-select-label" style="font-family:var(--mono); font-size:11px; color:var(--soft); margin-bottom:6px;">DOCUMENT A</div>
+            <select class="doc-select" id="compare-doc-a" style="width:100%; background:var(--ink3); border:1px solid var(--fog); border-radius:var(--r); color:var(--white); font-family:var(--mono); font-size:12px; padding:9px 10px; outline:none; cursor:pointer;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div style="font-family:var(--serif); font-style:italic; font-size:18px; color:var(--dim); padding-bottom:10px; text-align:center;">vs</div>
+          <div>
+            <div class="doc-select-label" style="font-family:var(--mono); font-size:11px; color:var(--soft); margin-bottom:6px;">DOCUMENT B</div>
+            <select class="doc-select" id="compare-doc-b" style="width:100%; background:var(--ink3); border:1px solid var(--fog); border-radius:var(--r); color:var(--white); font-family:var(--mono); font-size:12px; padding:9px 10px; outline:none; cursor:pointer;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn-run" id="compare-btn" onclick="runComparison()" disabled>Compare Documents →</button>
+
+        <div id="compare-result"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:8000';
+let connected = false;
+let documents = [];
+let selectedDocIds = new Set();
+let currentTab = 'qa';
+let extractType = 'invoice';
+let qaHistory = [];
+
+// ── Utils ──────────────────────────────────────────
+
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  setTimeout(() => el.className = 'toast', 3000);
+}
+
+function fileIcon(type) {
+  const m = {pdf:'📕', docx:'📘', doc:'📘', txt:'📄', md:'📝'};
+  return m[type] || '📄';
+}
+
+function wordCount(n) {
+  return n >= 1000 ? (n/1000).toFixed(1)+'k words' : n+' words';
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ── Connect ────────────────────────────────────────
+
+async function connectEngine() {
+  const key = document.getElementById('groq-key').value.trim();
+  const model = document.getElementById('model-sel').value;
+  if (!key) { toast('Enter your Groq API key', 'err'); return; }
+
+  const btn = document.getElementById('connect-btn');
+  btn.textContent = '⏳ Initializing...'; btn.disabled = true;
+
+  try {
+    const r = await fetch(`${API}/init`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({groq_api_key: key, model})
+    });
+    if (!r.ok) throw new Error(await r.text());
+    connected = true;
+    document.getElementById('status-dot').classList.add('live');
+    document.getElementById('status-text').textContent = model.split('-').slice(0,3).join('-');
+    document.getElementById('qa-send').disabled = false;
+    document.getElementById('extract-btn').disabled = false;
+    btn.textContent = '✅ Connected';
+    document.querySelector('.welcome-notice')?.remove();
+    toast('Engine connected!', 'ok');
+  } catch(e) {
+    btn.textContent = '▶ Initialize Engine'; btn.disabled = false;
+    toast('Connection failed: ' + e.message, 'err');
+  }
+}
+
+// ── Upload ─────────────────────────────────────────
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) uploadFile(file);
+}
+function handleFile(e) {
+  if (e.target.files[0]) uploadFile(e.target.files[0]);
+}
+
+async function uploadFile(file) {
+  if (!connected) { toast('Connect the engine first', 'err'); return; }
+  const status = document.getElementById('upload-status');
+  status.style.display = 'block';
+
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch(`${API}/documents/upload`, {method:'POST', body:fd});
+    if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
+    const data = await r.json();
+    addDocument(data.document);
+    toast(`"${file.name}" ready ✓`, 'ok');
+  } catch(e) {
+    toast('Upload failed: ' + e.message, 'err');
+  } finally {
+    status.style.display = 'none';
+    document.getElementById('file-input').value = '';
+  }
+}
+
+function addDocument(doc) {
+  // avoid duplicates
+  if (documents.find(d => d.doc_id === doc.doc_id)) return;
+  documents.push(doc);
+  renderDocList();
+  updateSelectDropdowns();
+}
+
+function renderDocList() {
+  const list = document.getElementById('doc-list');
+  document.getElementById('doc-count').textContent = documents.length;
+
+  if (!documents.length) {
+    list.innerHTML = '<div class="doc-empty">No documents yet.<br/>Upload to get started.</div>';
+    return;
+  }
+
+  list.innerHTML = documents.map(doc => `
+    <div class="doc-card ${selectedDocIds.has(doc.doc_id)?'selected':''}" id="dcard-${doc.doc_id}" onclick="toggleDocSelect('${doc.doc_id}')">
+      <div class="doc-sel-check"><div class="check-box">${selectedDocIds.has(doc.doc_id)?'✓':''}</div></div>
+      <button class="doc-del" onclick="event.stopPropagation(); deleteDoc('${doc.doc_id}')" title="Remove">✕</button>
+      <div class="doc-card-top">
+        <div class="doc-icon">${fileIcon(doc.file_type)}</div>
+        <div style="flex:1; min-width:0;">
+          <div class="doc-name">${doc.filename}</div>
+          <div class="doc-meta">${doc.page_count}p · ${wordCount(doc.word_count)} · ${doc.chunk_count} chunks</div>
+        </div>
+      </div>
+      ${doc.summary ? `<div class="doc-summary">${doc.summary}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function toggleDocSelect(docId) {
+  if (selectedDocIds.has(docId)) selectedDocIds.delete(docId);
+  else selectedDocIds.add(docId);
+  renderDocList();
+}
+
+async function deleteDoc(docId) {
+  try {
+    await fetch(`${API}/documents/${docId}`, {method:'DELETE'});
+    documents = documents.filter(d => d.doc_id !== docId);
+    selectedDocIds.delete(docId);
+    renderDocList();
+    updateSelectDropdowns();
+    toast('Document removed', 'ok');
+  } catch(e) { toast('Delete failed', 'err'); }
+}
+
+function updateSelectDropdowns() {
+  const opts = ['<option value="">— Choose a document —</option>',
+    ...documents.map(d => `<option value="${d.doc_id}">${d.filename}</option>`)
+  ].join('');
+  document.getElementById('extract-doc-select').innerHTML = opts;
+  const aOpts = ['<option value="">— Select —</option>', ...documents.map(d => `<option value="${d.doc_id}">${d.filename}</option>`)].join('');
+  document.getElementById('compare-doc-a').innerHTML = aOpts;
+  document.getElementById('compare-doc-b').innerHTML = aOpts;
+  checkCompareBtn();
+}
+
+// ── Tabs ───────────────────────────────────────────
+
+function switchTab(tab) {
+  currentTab = tab;
+  ['qa','extract','compare'].forEach(t => {
+    document.getElementById(`tab-${t}`).className = 'tab' + (t===tab?' active':'');
+    document.getElementById(`view-${t}`).style.display = t===tab ? 'flex' : 'none';
+    if (t===tab) document.getElementById(`view-${t}`).style.flexDirection = 'column';
+  });
+  document.getElementById('view-' + tab).style.display = tab==='qa' ? 'flex' : 'block';
+}
+
+// ── Q&A ────────────────────────────────────────────
+
+function qaKey(e) {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendQA(); }
+}
+
+async function sendQA() {
+  if (!connected) { toast('Connect first', 'err'); return; }
+  const input = document.getElementById('qa-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = ''; input.style.height = 'auto';
+  document.getElementById('qa-send').disabled = true;
+
+  const msgs = document.getElementById('qa-messages');
+  document.getElementById('welcome-qa')?.remove();
+
+  // User bubble
+  const userDiv = document.createElement('div');
+  userDiv.className = 'msg-user';
+  userDiv.textContent = q;
+  msgs.appendChild(userDiv);
+
+  // Loading
+  const loadDiv = document.createElement('div');
+  loadDiv.className = 'msg-ai';
+  loadDiv.innerHTML = '<div class="loading-row"><div class="spinner"></div><span style="font-family:var(--mono);font-size:12px;color:var(--dim)">Searching documents...</span></div>';
+  msgs.appendChild(loadDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const docIds = selectedDocIds.size > 0 ? [...selectedDocIds] : null;
+    const r = await fetch(`${API}/qa`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({question: q, doc_ids: docIds})
+    });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const data = await r.json();
+
+    const confClass = `confidence-${data.confidence}`;
+    const confLabel = data.confidence.toUpperCase();
+
+    loadDiv.innerHTML = `
+      <div class="confidence-badge ${confClass}">◈ ${confLabel} CONFIDENCE</div>
+      <div class="msg-ai-bubble">${marked.parse(data.answer)}</div>
+      ${data.sources.length ? `
+        <div class="sources-row">
+          ${data.sources.map(s => `<div class="source-pill">📎 ${s.filename} §${s.section} (${s.relevance}%)</div>`).join('')}
+        </div>` : ''}
+    `;
+    loadDiv.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+  } catch(e) {
+    loadDiv.innerHTML = `<div class="msg-ai-bubble" style="color:var(--rose)">Error: ${e.message}</div>`;
+  }
+
+  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById('qa-send').disabled = !connected;
+}
+
+// ── Extraction ─────────────────────────────────────
+
+function selectExtractType(btn) {
+  document.querySelectorAll('.extract-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  extractType = btn.dataset.type;
+}
+
+async function runExtraction() {
+  const docId = document.getElementById('extract-doc-select').value;
+  if (!docId) { toast('Select a document first', 'err'); return; }
+
+  const btn = document.getElementById('extract-btn');
+  btn.textContent = '⏳ Extracting...'; btn.disabled = true;
+  document.getElementById('extract-result').innerHTML = '<div class="loading-row"><div class="spinner"></div> Analyzing document structure...</div>';
+
+  try {
+    const r = await fetch(`${API}/extract`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({doc_id: docId, extraction_type: extractType})
+    });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const data = await r.json();
+
+    document.getElementById('extract-result').innerHTML = `
+      <div class="result-card">
+        <div class="result-card-header">
+          <div class="result-card-title">EXTRACTED DATA · ${extractType.toUpperCase()}</div>
+          <button class="btn-sm" onclick="copyJSON(${JSON.stringify(JSON.stringify(data.extracted_data))})">copy JSON</button>
+        </div>
+        <div class="result-card-body">
+          <div class="json-viewer">${syntaxHighlightJSON(data.extracted_data)}</div>
+        </div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('extract-result').innerHTML = `<div style="color:var(--rose);font-family:var(--mono);font-size:12px;margin-top:12px;">Error: ${e.message}</div>`;
+  }
+  btn.textContent = 'Extract Data →'; btn.disabled = false;
+}
+
+function syntaxHighlightJSON(obj, indent=0) {
+  const pad = '  '.repeat(indent);
+  const pad1 = '  '.repeat(indent+1);
+  if (obj === null) return '<span class="json-null">null</span>';
+  if (typeof obj === 'boolean') return `<span class="json-bool">${obj}</span>`;
+  if (typeof obj === 'number') return `<span class="json-num">${obj}</span>`;
+  if (typeof obj === 'string') return `<span class="json-str">"${obj.replace(/</g,'&lt;').replace(/>/g,'&gt;')}"</span>`;
+  if (Array.isArray(obj)) {
+    if (!obj.length) return '[]';
+    const items = obj.map(v => `${pad1}${syntaxHighlightJSON(v, indent+1)}`).join(',\n');
+    return `[\n${items}\n${pad}]`;
+  }
+  const keys = Object.keys(obj);
+  if (!keys.length) return '{}';
+  const items = keys.map(k => `${pad1}<span class="json-key">"${k}"</span>: ${syntaxHighlightJSON(obj[k], indent+1)}`).join(',\n');
+  return `{\n${items}\n${pad}}`;
+}
+
+function copyJSON(jsonStr) {
+  navigator.clipboard.writeText(jsonStr).then(() => toast('JSON copied!', 'ok'));
+}
+
+// ── Compare ────────────────────────────────────────
+
+function checkCompareBtn() {
+  const a = document.getElementById('compare-doc-a').value;
+  const b = document.getElementById('compare-doc-b').value;
+  document.getElementById('compare-btn').disabled = !(a && b && connected);
+}
+
+document.getElementById('compare-doc-a').addEventListener('change', checkCompareBtn);
+document.getElementById('compare-doc-b').addEventListener('change', checkCompareBtn);
+
+async function runComparison() {
+  const a = document.getElementById('compare-doc-a').value;
+  const b = document.getElementById('compare-doc-b').value;
+  if (!a || !b) { toast('Select two documents', 'err'); return; }
+  if (a === b) { toast('Please select two different documents', 'err'); return; }
+
+  const btn = document.getElementById('compare-btn');
+  btn.textContent = '⏳ Comparing...'; btn.disabled = true;
+  document.getElementById('compare-result').innerHTML = '<div class="loading-row"><div class="spinner"></div> Analyzing both documents...</div>';
+
+  try {
+    const r = await fetch(`${API}/compare`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({doc_id_a: a, doc_id_b: b})
+    });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const d = await r.json();
+
+    document.getElementById('compare-result').innerHTML = `
+      <div class="compare-result">
+        <div class="compare-col sim">
+          <div class="compare-col-title">◈ SIMILARITIES (${d.similarities.length})</div>
+          ${d.similarities.map(s => `<div class="compare-item"><span class="compare-bullet" style="color:var(--teal)">✓</span>${s}</div>`).join('')}
+        </div>
+        <div class="compare-col diff">
+          <div class="compare-col-title">◈ DIFFERENCES (${d.differences.length})</div>
+          ${d.differences.map(s => `<div class="compare-item"><span class="compare-bullet" style="color:var(--rose)">≠</span>${s}</div>`).join('')}
+        </div>
+      </div>
+      ${d.summary ? `<div class="summary-box">"${d.summary}"</div>` : ''}
+    `;
+  } catch(e) {
+    document.getElementById('compare-result').innerHTML = `<div style="color:var(--rose);font-family:var(--mono);font-size:12px;margin-top:12px;">Error: ${e.message}</div>`;
+  }
+  btn.textContent = 'Compare Documents →'; btn.disabled = false;
+}
+
+// ── Clear & Init ───────────────────────────────────
+
+function clearAll() {
+  if (!confirm('Remove all documents from this session?')) return;
+  documents = []; selectedDocIds.clear();
+  renderDocList(); updateSelectDropdowns();
+  document.getElementById('qa-messages').innerHTML = `
+    <div class="welcome" id="welcome-qa">
+      <div class="welcome-title">Ask your<br/><span>documents</span></div>
+      <p class="welcome-sub">Upload documents and ask questions in natural language.</p>
+    </div>`;
+  document.getElementById('extract-result').innerHTML = '';
+  document.getElementById('compare-result').innerHTML = '';
+}
+
+window.addEventListener('load', async () => {
+  try {
+    const r = await fetch(`${API}/health`);
+    if (r.ok) {
+      const d = await r.json();
+      if (d.engine_ready) {
+        connected = true;
+        document.getElementById('status-dot').classList.add('live');
+        document.getElementById('status-text').textContent = d.model.split('-').slice(0,3).join('-');
+        document.getElementById('qa-send').disabled = false;
+        document.getElementById('extract-btn').disabled = false;
+        document.getElementById('connect-btn').textContent = '✅ Connected';
+        document.querySelector('.welcome-notice')?.remove();
+      }
+    }
+  } catch {}
+});
+</script>
+</body>
+</html>
