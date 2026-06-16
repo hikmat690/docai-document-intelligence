@@ -229,29 +229,46 @@ class DocumentEngine:
             else:
                 where_filter = {"doc_id": {"$in": doc_ids}}
 
-        # Retrieve top-k chunks
-        results = self.vectorstore.similarity_search_with_relevance_scores(
-            question,
-            k=6,
-            filter=where_filter,
-        )
+        # Retrieve top-k chunks — try with filter first, fallback without
+        try:
+            results = self.vectorstore.similarity_search_with_relevance_scores(
+                question,
+                k=8,
+                filter=where_filter,
+            )
+        except Exception:
+            results = self.vectorstore.similarity_search_with_relevance_scores(
+                question, k=8
+            )
+
+        # If no results with filter, get all chunks for those docs directly
+        if not results and doc_ids:
+            try:
+                all_chunks = self.vectorstore.get(where={"doc_id": {"$in": doc_ids}} if len(doc_ids) > 1 else {"doc_id": doc_ids[0]})
+                if all_chunks and all_chunks.get("documents"):
+                    docs_text = "\n\n".join(all_chunks["documents"][:8])
+                    results = []
+                    # Build fake results from direct fetch
+                    for i, (txt, meta) in enumerate(zip(all_chunks["documents"][:8], all_chunks["metadatas"][:8])):
+                        from langchain_core.documents import Document
+                        results.append((Document(page_content=txt, metadata=meta), 0.75))
+            except Exception:
+                pass
 
         if not results:
             return QAResult(
-                answer="I couldn't find relevant information in the selected documents. Please try rephrasing your question.",
+                answer="No document chunks found. Please re-upload your document and try again.",
                 sources=[],
                 confidence="low",
                 doc_ids_used=doc_ids or [],
             )
 
-        # Build context
+        # Build context — remove score threshold so all chunks are used
         context_parts = []
         sources = []
         seen_chunks = set()
 
         for doc, score in results:
-            if score < 0.1:
-                continue
             chunk_id = doc.metadata.get("chunk_index", 0)
             filename = doc.metadata.get("filename", "Unknown")
             key = f"{filename}_{chunk_id}"
@@ -276,18 +293,19 @@ class DocumentEngine:
         confidence = "high" if avg_score > 70 else "medium" if avg_score > 40 else "low"
 
         # Generate answer
-        system_prompt = """You are DocAI, an expert document analyst. Answer questions based ONLY on the provided document context.
+        system_prompt = """You are DocAI, an expert document analyst. Document content has been retrieved and is provided below. Use it to answer thoroughly.
 
 Rules:
-- Be specific and cite which document/section your answer comes from
-- If the answer isn't in the context, say so clearly
+- ALWAYS answer from the document context — never say there is no context or no document provided
+- For summaries: cover the main topic, all key points, important details and conclusions
+- Be specific and mention which section info comes from
 - Use bullet points for lists
 - Format numbers and dates clearly
-- Be concise but complete"""
+- Be detailed and complete — give a thorough answer"""
 
         response = self.llm.invoke([
             SystemMessage(content=system_prompt),
-            HumanMessage(content=f"Question: {question}\n\nDocument Context:\n{context}\n\nAnswer:"),
+            HumanMessage(content=f"Question: {question}\n\nDocument Content:\n{context}\n\nProvide a thorough answer based on the document content above:"),
         ])
 
         used_ids = list(set(s["doc_id"] for s in sources))

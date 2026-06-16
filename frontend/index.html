@@ -203,6 +203,7 @@ select.field-input { cursor: pointer; }
   flex: 1;
   overflow-y: auto;
   padding: 8px;
+  min-height: 80px;
 }
 
 .doc-empty {
@@ -827,9 +828,13 @@ async function uploadFile(file) {
 }
 
 function addDocument(doc) {
-  // avoid duplicates
-  if (documents.find(d => d.doc_id === doc.doc_id)) return;
-  documents.push(doc);
+  // avoid duplicates — but still re-render and select
+  const exists = documents.find(d => d.doc_id === doc.doc_id);
+  if (!exists) {
+    documents.push(doc);
+  }
+  // auto-select the uploaded document
+  selectedDocIds.add(doc.doc_id);
   renderDocList();
   updateSelectDropdowns();
 }
